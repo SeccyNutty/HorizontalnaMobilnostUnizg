@@ -88,6 +88,7 @@ aside{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);ov
 .meta b{color:var(--ink);font-weight:600}
 .snip{margin:0;max-width:78ch;color:var(--ink);white-space:pre-line}
 .snip .lead{color:var(--faint);font-size:12.5px;display:block;margin-bottom:2px}
+.snip .lead.ext{font-style:italic}
 .full{white-space:pre-wrap;max-width:78ch;margin:8px 0 0;font-size:14.5px;border-left:3px solid var(--rule);padding-left:14px}
 .acts{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:13.5px}
 .acts button{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;font-weight:500;text-decoration:underline;text-underline-offset:2px}
@@ -146,7 +147,7 @@ mark{background:linear-gradient(100deg,transparent 0 2%,var(--mark) 3% 96%,trans
 </div>
 <footer class="foot">
   <p>Izvor: ISVU, Pregled podataka visokih učilišta (isvu.hr), nastavni programi za __YEARLABEL__, redovni i izvanredni studiji; uključene razine: prijediplomski, diplomski, integrirani i stručni studiji. Doktorski i poslijediplomski specijalistički studiji nisu uključeni.</p>
-  <p>Područje je dodijeljeno prema sastavnici, ne prema pojedinom kolegiju. Zimski semestar obuhvaća neparne, a ljetni parne semestre studija. Za kolegije bez polja „Opis predmeta” prikazani su ishodi učenja. Uvjete upisa i dostupnost za studente drugih sastavnica provjerite kod matične i ciljne sastavnice.</p>
+  <p>Područje je dodijeljeno prema sastavnici, ne prema pojedinom kolegiju. Zimski semestar obuhvaća neparne, a ljetni parne semestre studija. Za kolegije bez polja „Opis predmeta” u ISVU-u prikazan je opis sa stranice fakulteta (Filozofski, FER, Kineziološki, Agronomski, Pravni; spojeno isključivo po ISVU šifri kolegija, uz link na izvor), a ako ga nema, ishodi učenja iz ISVU-a. Uvjete upisa i dostupnost za studente drugih sastavnica provjerite kod matične i ciljne sastavnice.</p>
 </footer>
 
 <script id="data" type="application/octet-stream">__DATA__</script>
@@ -328,11 +329,12 @@ function card(c){
     <h3><a href="${esc(c.u)}" target="_blank" rel="noopener">${highlight(c.n, qs)}</a></h3>
     <div class="fac">${esc(D.fac[c.f][1])}</div>
     <div class="meta"><span><b>${fmtE(c.e)}</b> ECTS</span><span>${esc(lv)}</span><span>${esc(zl)}${sems?" ("+esc(sems)+")":""}</span>${c.j?`<span>${esc(c.j)}</span>`:""}</div>
-    ${c.d ? `<p class="snip">${c.dk?'<span class="lead">Ishodi učenja (opis nije unesen)</span>':''}${sn.html}</p>` : `<p class="snip" style="color:var(--faint)">Opis nije unesen u ISVU.</p>`}
+    ${c.d ? `<p class="snip">${c.dk===1?'<span class="lead">Ishodi učenja (opis nije unesen)</span>':c.dk===2?`<span class="lead ext">Opis sa stranice fakulteta${c.x[2]?" (izvedbeni plan "+esc(c.x[2])+")":""}, nije iz ISVU-a</span>`:''}${sn.html}</p>` : `<p class="snip" style="color:var(--faint)">Opis nije unesen u ISVU.</p>`}
     <div class="acts">
       ${c.d && c.d.length > 300 ? `<button type="button" data-a="full" aria-expanded="false">Cijeli opis</button>` : ""}
       <button type="button" data-a="progs" aria-expanded="false">Studiji (${c.p.length})</button>
       <a href="${esc(c.u)}" target="_blank" rel="noopener">Kolegij u ISVU-u</a>
+      ${c.dk===2 ? `<a href="${esc(c.x[1])}" target="_blank" rel="noopener" title="${esc(D.src[c.x[0]])}">Izvor opisa</a>` : ""}
     </div>`;
   li.addEventListener("click", e=>{
     const b = e.target.closest("button[data-a]"); if (!b) return;
@@ -414,17 +416,18 @@ async function load(){
   const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));
   D = JSON.parse(await new Response(stream).text());
   C = D.c.map(r => {
-    const [n,f,e,l,s,d,dk,u,j,p] = r;
+    const [n,f,e,l,s,d,dk,u,j,p,x] = r;
     const fac = D.fac[f];
     const zl = [...new Set(s.map(x => x % 2 ? 0 : 1))].sort();
     const eb = ECTS_B.findIndex(b=>b[1](e));
-    return {n,f,e,l,s,d,dk,j,p, a:fac[2], zl, eb, en: /engl/i.test(j||"") ? 1 : 0,
+    return {n,f,e,l,s,d,dk,j,p,x, a:fac[2], zl, eb, en: /engl/i.test(j||"") ? 1 : 0,
       u:`https://www.isvu.hr/visokaucilista/hr/podaci/${fac[0]}/akademskagodina/${D.year}/predmet/${u[0]}/razina/${u[1]}/izvedba/${u[2]}/smjer/${u[3]}`,
       nn: norm(n), nd: norm(d||"")};
   });
-  const nd = C.filter(c => !c.d).length;
-  if (nd){ const el = $("#nodesc"); el.hidden = false;
-    el.textContent = `Za ${nd.toLocaleString("hr")} od ${C.length.toLocaleString("hr")} kolegija (${Math.round(100*nd/C.length)} %) fakulteti u ISVU nisu unijeli opis, pa se oni pronalaze samo po nazivu.`; }
+  const nd = C.filter(c => !c.d).length, nx = C.filter(c => c.dk===2).length;
+  if (nd || nx){ const el = $("#nodesc"); el.hidden = false;
+    el.textContent = (nx ? `Za ${nx.toLocaleString("hr")} kolegija bez opisa u ISVU-u opis je preuzet sa stranice fakulteta (označeno uz kolegij). ` : "") +
+      (nd ? `Za ${nd.toLocaleString("hr")} od ${C.length.toLocaleString("hr")} kolegija (${Math.round(100*nd/C.length)} %) opis nije dostupan, pa se oni pronalaze samo po nazivu.` : ""); }
   IDX = buildIndex();
   wire();
   const hq = new URLSearchParams(location.hash.slice(1)).get("q");

@@ -11,6 +11,9 @@ wd = workdir(a)
 insts = {v[0]: v[1] for v in jload(wd, "institutions.json")}
 occ = [o for o in jload(wd, "occurrences.json") if o["raz"] not in EXCLUDED_LEVELS]
 det = jload(wd, "details.json")
+# Descriptions from faculty websites (stage 3b), used only where ISVU has no "Opis predmeta".
+ext = jload(wd, "external.json") if os.path.exists(os.path.join(wd, "external.json")) else {"sources": {}, "c": {}}
+SRC = list(ext["sources"])
 
 DISPLAY = {37: "PMF – Matematički odsjek", 119: "PMF – prirodoslovni odsjeci",
            9996: "Sveučilište u Zagrebu (sveučilišni studiji)", 251: "Sveučilišni centar za protestantsku teologiju"}
@@ -63,7 +66,11 @@ for (vu, pid), os_ in by.items():
     e = fnum(d.get("ECTS bodovi"))
     if e is None:
         e = fnum(os_[0]["ects"]) or 0.0
-    desc, dk = clean(d.get("Opis predmeta")), 0
+    desc, dk, x = clean(d.get("Opis predmeta")), 0, 0
+    xe = ext["c"].get(f"{vu}:{pid}")
+    if not desc and xe:
+        desc, dk = clean(xe["t"]), 2
+        x = [SRC.index(xe["s"]), xe["u"], xe.get("y", "")]
     if not desc:
         desc = clean(d.get("Ishodi učenja"))
         dk = int(bool(desc))
@@ -74,7 +81,7 @@ for (vu, pid), os_ in by.items():
     recs.append(dict(vu=vu, pid=pid, name=name, e=e, desc=desc, dk=dk, progs=progs, ok=bool(d),
                      lv=sorted({o["raz"] for o in os_}, key=LV_ORDER.index), sems=sorted({o["sem"] for o in os_}),
                      langs=", ".join(x for x in (d.get("Jezici izvođenja nastave") or []) if x),
-                     u=[pid, ref["raz"], ref["izv"], ref["sm"]]))
+                     u=[pid, ref["raz"], ref["izv"], ref["sm"]], x=x))
 
 # Same course under different codes at one institution (identical name, ECTS and description) -> merge.
 groups = collections.defaultdict(list)
@@ -97,10 +104,10 @@ vu_used = sorted({r["vu"] for r in merged}, key=lambda v: DISPLAY.get(v, insts[v
 fidx = {v: i for i, v in enumerate(vu_used)}
 lv_used = [l for l in LV_ORDER if any(l in r["lv"] for r in merged)]
 lidx = {l: i for i, l in enumerate(lv_used)}
-data = {"year": a.year, "areas": AREAS, "levels": [LEVELS[l] for l in lv_used],
+data = {"year": a.year, "areas": AREAS, "src": [ext["sources"][k] for k in SRC], "levels": [LEVELS[l] for l in lv_used],
         "fac": [[v, DISPLAY.get(v, insts[v]), AREA_OF.get(v, 7)] for v in vu_used],
         "c": [[r["name"], fidx[r["vu"]], r["e"], [lidx[x] for x in r["lv"]], r["sems"], r["desc"], r["dk"],
-               r["u"], r["langs"], r["progs"]] for r in merged]}
+               r["u"], r["langs"], r["progs"], r["x"]] for r in merged]}
 raw = json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()
 b64 = base64.b64encode(gzip.compress(raw, 9)).decode()
 jdump(merged, wd, "courses.json")
@@ -114,7 +121,7 @@ open(a.out, "w", encoding="utf-8").write(html)
 size = len(html.encode()) / 1e6
 print(f"[s4] kolegija: {len(merged)} (spojeno istih pod drugom šifrom: {n_merged})", flush=True)
 print(f"[s4] bez detalja: {sum(not r['ok'] for r in merged)}, bez opisa: {sum(not r['desc'] for r in merged)}, "
-      f"ishodi umjesto opisa: {sum(r['dk'] for r in merged)}", flush=True)
+      f"ishodi umjesto opisa: {sum(r['dk'] == 1 for r in merged)}, opis sa stranice fakulteta: {sum(r['dk'] == 2 for r in merged)}", flush=True)
 print(f"[s4] podaci {len(raw)/1e6:.1f} MB -> HTML {size:.1f} MB: {a.out}", flush=True)
 if size > 15.5:
     print("[s4] UPOZORENJE: HTML je blizu granice od 16 MB za objavu kao artefakt.", flush=True)

@@ -32,7 +32,7 @@ jobs:
           node-version: "20"
 
       - name: Instaliraj ovisnosti
-        run: pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4 pdfplumber
 
       - name: Odredi akademsku godinu
         id: y
@@ -49,6 +49,8 @@ jobs:
           python s1_institutions.py $A
           python s2_programs.py $A
           python s3_details.py $A --threads 8
+          # Opisi sa stranica fakulteta; nedostupan fakultet ne ruši izgradnju (zadržavaju se prethodni podaci).
+          python s3b_external.py $A --threads 8 || echo "::warning::s3b_external nije uspio, gradim bez vanjskih opisa"
           python s4_build.py $A --out ${{ github.workspace }}/work/index.html
 
       - name: Provjeri prema ISVU-u (uzorak uživo + pretraga)
@@ -73,7 +75,7 @@ jobs:
           cp work/index.html site/index.html
           git config user.name "isvu-refresh-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add site/index.html
+          git add site/index.html pipeline/data/external.json.gz
           if git diff --cached --quiet; then echo "Nema promjena."; exit 0; fi
           git commit -m "Osvježeni kolegiji iz ISVU-a ($(date +%Y-%m-%d))"
           git push

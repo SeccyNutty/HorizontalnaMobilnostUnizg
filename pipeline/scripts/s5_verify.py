@@ -56,7 +56,8 @@ for c in sample:
     chk = {
         "name": n(d.get("naziv")) == n(c["name"]),
         "ects": abs(float((d.get("ECTS bodovi") or "0").replace(",", ".")) - c["e"]) < 1e-6,
-        "desc": n(live_desc)[:300] == n(c["desc"])[:300],
+        # dk 2 = description from the faculty website (checked in section D); ISVU must still have none
+        "desc": (not (d.get("Opis predmeta") or "").strip()) if c["dk"] == 2 else n(live_desc)[:300] == n(c["desc"])[:300],
         "lang": ", ".join(d.get("Jezici izvođenja nastave") or []) == c["langs"],
         "link": True,
     }
@@ -120,6 +121,60 @@ else:
         log(f"- {'✓' if same else '⚠'} " + "; ".join(f"„{x['f']}” → korijen `{x['stem']}`, {x['n']} kolegija" for x in rows))
         if not same and pair == a.queries.split(",")[0]:
             hard_fail = True
+
+# ---------- D: descriptions taken from faculty websites ----------
+ext_path = os.path.join(wd, "external.json")
+if os.path.exists(ext_path):
+    import difflib, io
+    import requests
+    ext = json.load(open(ext_path, encoding="utf-8"))
+    by_src = {}
+    for c in courses:
+        if c.get("dk") == 2:
+            by_src.setdefault(c["x"][0], []).append(c)
+    keys = list(ext["sources"])
+    log("## D) Opisi sa stranica fakulteta: uzorak dohvaćen uživo\n")
+    if os.path.exists(os.path.join(wd, "external_report.md")):
+        log(open(os.path.join(wd, "external_report.md"), encoding="utf-8").read())
+    log("| Izvor | Kolegij (ISVU) | Naziv na izvoru | Šifra na izvoru | Opis na izvoru | Naziv |")
+    log("|---|---|---|---|---|---|")
+    d_bad, d_code_fail = 0, 0
+    cache_live = {}
+    for si, lst in sorted(by_src.items()):
+        for c in rng.sample(lst, min(max(3, a.sample // 5), len(lst))):
+            e = ext["c"][f"{c['vu']}:{c['pid']}"]
+            url = c["x"][1]
+            if url not in cache_live:
+                try:
+                    r = requests.get(url, timeout=180, headers={"User-Agent": "Mozilla/5.0 (UNIZG course-search tool)"})
+                    body = r.content if r.status_code == 200 else b""
+                    if body[:4] == b"%PDF":
+                        import pdfplumber
+                        with pdfplumber.open(io.BytesIO(body)) as pdf:
+                            body = "\n".join((p.extract_text() or "") for p in pdf.pages)
+                    else:
+                        body = body.decode("utf-8", "replace")
+                        body = re.sub(r"<[^>]+>", " ", body).replace("&nbsp;", " ")
+                except Exception:
+                    body = ""
+                cache_live[url] = n(body)
+            live = cache_live[url]
+            codes = [str(c["pid"])] + [str(x) for x in c.get("alt_pids", [])]
+            code_ok = any(k in live for k in codes)
+            # description check: a distinctive line of our text must appear on the live page
+            lines = [n(l.lstrip("- ")) for l in e["t"].split("\n") if len(l) > 25]
+            desc_ok = bool(live) and any(l[:30] in live for l in lines[:8])
+            ratio = difflib.SequenceMatcher(None, n(e.get("n")), n(c["name"])).ratio() if e.get("n") else None
+            name_txt = "–" if ratio is None else ("✓" if ratio > 0.6 else f"⚠ „{e['n'][:40]}”")
+            if not live or not code_ok or not desc_ok:
+                d_bad += 1
+            if live and not code_ok:
+                d_code_fail += 1
+            mk = lambda b: "✓" if b else "✗"
+            log(f"| {ext['sources'][keys[si]]} | [{c['name'][:45]}]({url}) | {name_txt} | {mk(code_ok)} | {mk(desc_ok)} | {'' if live else 'izvor nedostupan'} |")
+    log(f"\nNeuspjelih provjera vanjskih opisa: {d_bad}.\n")
+    # A faculty site being down must not block publishing; a code mismatch on a reachable page must.
+    hard_fail = hard_fail or d_code_fail > 0
 
 open(os.path.join(wd, "verification_report.md"), "w", encoding="utf-8").write("\n".join(rep))
 log(f"\n[s5] {'NEUSPJEH' if hard_fail else 'USPJEH'} – izvještaj: {os.path.join(wd, 'verification_report.md')}")
