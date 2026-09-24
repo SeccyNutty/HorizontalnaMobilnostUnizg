@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kolegiji UNIZG za horizontalnu mobilnost __YEARLABEL__</title>
+<meta name="description" content="Pretraživač kolegija svih sastavnica Sveučilišta u Zagrebu za horizontalnu mobilnost, ak. god. __YEARLABEL__. Podaci iz ISVU-a.">
+<meta property="og:title" content="Kolegiji UNIZG za horizontalnu mobilnost __YEARLABEL__">
+<meta property="og:description" content="Pretraži kolegije svih fakulteta Sveučilišta u Zagrebu po ključnoj riječi, fakultetu, razini, semestru i ECTS-u.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2230; --muted:#5a6376; --faint:#8a92a3;
+  --paper:#ffffff; --surface:#f3f5f8; --rule:#dfe3ea;
+  --accent:#9e1b32; --accent-soft:#f6e6e9;
+  --mark:#ffd84d; --mark-ink:#1c2230;
+  --focus:#2356c7;
+  --sans:"Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#e8ebf1; --muted:#a9b1c1; --faint:#7d8699;
+    --paper:#161a22; --surface:#1d222c; --rule:#2e3542;
+    --accent:#e0667b; --accent-soft:#3a1f26;
+    --mark:#8a6d00; --mark-ink:#fff6d6; --focus:#7aa2ff;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e8ebf1; --muted:#a9b1c1; --faint:#7d8699;
+  --paper:#161a22; --surface:#1d222c; --rule:#2e3542;
+  --accent:#e0667b; --accent-soft:#3a1f26;
+  --mark:#8a6d00; --mark-ink:#fff6d6; --focus:#7aa2ff;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.55 var(--sans);-webkit-text-size-adjust:100%}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+
+.top{background:var(--surface);border-bottom:1px solid var(--rule)}
+.top-in{max-width:1240px;margin:0 auto;padding:28px 24px 22px}
+h1{font:600 clamp(24px,3.4vw,34px)/1.15 var(--serif);margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 18px;max-width:70ch}
+.searchrow{display:flex;gap:10px;align-items:stretch;max-width:880px}
+.q{flex:1;min-width:0;border:1.5px solid var(--rule);background:var(--paper);border-radius:10px;padding:14px 16px;font-size:18px}
+.q:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 25%,transparent)}
+.hint{color:var(--faint);font-size:13px;margin-top:8px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:20px 24px 60px;display:grid;grid-template-columns:280px minmax(0,1fr);gap:32px}
+aside{position:sticky;top:12px;align-self:start;max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}
+.fgroup{border-top:1px solid var(--rule);padding:14px 0}
+.fgroup:first-child{border-top:0;padding-top:0}
+.fgroup h2{font:600 14px/1.3 var(--sans);margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline}
+.fgroup h2 button{border:0;background:none;color:var(--accent);font-size:13px;font-weight:500;cursor:pointer;padding:0}
+.opt{display:flex;align-items:flex-start;gap:8px;padding:3px 0;font-size:14px;cursor:pointer;line-height:1.35}
+.opt input{margin:2px 0 0;accent-color:var(--accent);flex:none}
+.opt .lbl{flex:1}
+.opt .n{color:var(--faint);font-variant-numeric:tabular-nums;font-size:12.5px}
+.opt.zero{opacity:.45}
+.faclist{max-height:300px;overflow:auto;padding-right:4px}
+.facsearch{width:100%;border:1px solid var(--rule);border-radius:7px;padding:6px 9px;margin-bottom:6px;background:var(--paper);font-size:14px}
+.clearall{border:1px solid var(--rule);background:var(--paper);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px;width:100%}
+
+.status{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.count{font-weight:600}
+.count small{font-weight:400;color:var(--muted)}
+.sortsel{border:1px solid var(--rule);border-radius:7px;padding:5px 8px;background:var(--paper);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.chip{border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:13px;cursor:pointer}
+.chip::after{content:" ×";color:var(--faint)}
+
+.res{list-style:none;margin:0;padding:0}
+.item{border-bottom:1px solid var(--rule);padding:18px 0}
+.item h3{font:600 19px/1.3 var(--serif);margin:0 0 3px}
+.item h3 a{color:var(--ink);text-decoration:none}
+.item h3 a:hover{text-decoration:underline;text-decoration-color:var(--accent)}
+.fac{color:var(--accent);font-weight:600;font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--muted);font-size:13.5px;margin:4px 0 8px}
+.meta b{color:var(--ink);font-weight:600}
+.snip{margin:0;max-width:78ch;color:var(--ink);white-space:pre-line}
+.snip .lead{color:var(--faint);font-size:12.5px;display:block;margin-bottom:2px}
+.full{white-space:pre-wrap;max-width:78ch;margin:8px 0 0;font-size:14.5px;border-left:3px solid var(--rule);padding-left:14px}
+.acts{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:13.5px}
+.acts button{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;font-weight:500;text-decoration:underline;text-underline-offset:2px}
+.progs{color:var(--muted);font-size:13px;margin-top:6px;max-width:78ch}
+mark{background:linear-gradient(100deg,transparent 0 2%,var(--mark) 3% 96%,transparent 98%);color:var(--mark-ink);padding:0 2px;border-radius:2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.more{display:block;margin:22px auto 0;border:1.5px solid var(--ink);background:var(--paper);border-radius:9px;padding:10px 22px;cursor:pointer;font-weight:600}
+.empty{padding:30px 0;color:var(--muted);max-width:60ch}
+.loading{padding:40px 0;color:var(--muted)}
+.foot{max-width:1240px;margin:0 auto;padding:0 24px 40px;color:var(--faint);font-size:12.5px}
+.foot p{max-width:90ch;margin:4px 0}
+.mfwrap{display:none}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;gap:8px}
+  aside{position:static;max-height:none;display:none;border:1px solid var(--rule);border-radius:10px;padding:14px}
+  aside.open{display:block}
+  .mfwrap{display:block}
+  .mfilters{display:inline-block;border:1px solid var(--rule);background:var(--paper);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:14px}
+  .top-in{padding:20px 16px 16px}
+  .wrap{padding:14px 16px 40px}
+  .q{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <h1>Kolegiji Sveučilišta u Zagrebu za horizontalnu mobilnost</h1>
+  <p class="sub">Akademska godina __YEARLABEL__ Nastavni programi svih sastavnica iz ISVU-a, preuzeti __DATE__ Kolegij koji se pojavljuje na više studija prikazan je jednom.</p>
+  <div class="searchrow">
+    <label for="q" style="position:absolute;left:-9999px">Ključna riječ</label>
+    <input id="q" class="q" type="search" placeholder="npr. poduzetništvo, robotika, strojno učenje" autocomplete="off" autofocus>
+  </div>
+  <div class="hint">Traži u nazivu i opisu kolegija. Dijakritici nisu bitni, a pronalaze se i drugi oblici riječi (poduzetništvo → poduzetnički, poduzetnik).</div>
+  <div class="hint" id="nodesc" hidden></div>
+</div></header>
+
+<div class="wrap">
+  <div class="mfwrap"><button class="mfilters" id="mf" aria-expanded="false" aria-controls="filters">Filtri</button></div>
+  <aside id="filters" aria-label="Filtri"></aside>
+  <main>
+    <div class="status">
+      <div class="count" id="count" aria-live="polite"></div>
+      <label style="font-size:14px;color:var(--muted)">Poredak
+        <select id="sort" class="sortsel">
+          <option value="rel">po relevantnosti</option>
+          <option value="name">po nazivu</option>
+          <option value="ects">po ECTS-u</option>
+        </select>
+      </label>
+    </div>
+    <div class="chips" id="chips"></div>
+    <ol class="res" id="res"><li class="loading">Učitavanje podataka…</li></ol>
+    <button class="more" id="more" hidden>Prikaži još</button>
+  </main>
+</div>
+<footer class="foot">
+  <p>Izvor: ISVU, Pregled podataka visokih učilišta (isvu.hr), nastavni programi za __YEARLABEL__, redovni i izvanredni studiji; uključene razine: prijediplomski, diplomski, integrirani i stručni studiji. Doktorski i poslijediplomski specijalistički studiji nisu uključeni.</p>
+  <p>Područje je dodijeljeno prema sastavnici, ne prema pojedinom kolegiju. Zimski semestar obuhvaća neparne, a ljetni parne semestre studija. Za kolegije bez polja „Opis predmeta” prikazani su ishodi učenja. Uvjete upisa i dostupnost za studente drugih sastavnica provjerite kod matične i ciljne sastavnice.</p>
+</footer>
+
+<script id="data" type="application/octet-stream">__DATA__</script>
+<script>
+"use strict";
+let D, C = [], IDX = null;
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// @@core-start
+function norm(s){ return s.toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+const WORD = /[\p{L}\p{N}]+/gu;
+const STOP = new Set("i u na za od do s sa se je o a ili te kao po pri iz k ka the and of in to for on with an by".split(" "));
+const SUF = ["ovanjem","ivanjem","iranjem","ovanje","ovanja","ivanje","ivanja","iranje","iranja","avanje","avanja",
+ "nistvo","nistva","nistvu","nistvom","nickih","nickog","nickom","nickoj","nickim","nicki","nicka","nicko","nicke","nicku",
+ "ijskih","ijskog","ijskom","ijski","ijska","ijsko","ijske","ijsku","ackih","ackog","acki","acka","acko","acke",
+ "skih","skog","skom","skoj","skim","skim","stvo","stva","stvu","nosti","nost","osti","ost",
+ "ickih","ickog","ickom","ickoj","icki","icka","icko","icke","icku","anje","anja","enje","enja","ckih","ckog","ckom","cki","cka","cko","cke","cku","ski","ska","sko","ske","sku",
+ "ijom","ija","ije","iji","iju","ama","ima","ega","emu","ome","oga","ih","og","om","oj","im","em","ov","ev","a","e","i","o","u"];
+function stem(t){
+  if (t.length <= 3) return t;
+  let s = t;
+  for (const x of SUF){ if (t.endsWith(x) && t.length - x.length >= 4){ s = t.slice(0, -x.length); break; } }
+  // -ika / -ica / -iga -> drop "ik"/"ic"/"ig" too (robotika ~ robotski, ekonomika ~ ekonomski)
+  if (/i[kcg]$/.test(s) && s.length - 2 >= 4) s = s.slice(0,-2);
+  else if (s.length >= 5 && /[kcghz]$/.test(s)) s = s.slice(0,-1);
+  return s;
+}
+function parseQuery(q){
+  const out = [];
+  for (const m of norm(q).matchAll(WORD)){
+    const t = m[0];
+    if (STOP.has(t)) continue;
+    out.push({t, s: stem(t), exact: t.length <= 3});
+  }
+  return out;
+}
+function tokMatch(w, qt){ return qt.exact ? w === qt.t : w.startsWith(qt.s); }
+// @@core-end
+
+// ---------- index ----------
+function buildIndex(){
+  const vocab = new Map();
+  for (let i = 0; i < C.length; i++){
+    const c = C[i];
+    const seen = new Set();
+    for (const m of (c.nn + " " + c.nd).matchAll(WORD)) seen.add(m[0]);
+    for (const w of seen){ let a = vocab.get(w); if (!a){ a = []; vocab.set(w, a);} a.push(i); }
+  }
+  const words = [...vocab.keys()].sort();
+  return {words, post: words.map(w => vocab.get(w))};
+}
+function lowerBound(arr, x){ let lo=0, hi=arr.length; while(lo<hi){ const m=(lo+hi)>>1; if(arr[m]<x) lo=m+1; else hi=m; } return lo; }
+function docsFor(qt){
+  const set = new Set();
+  if (qt.exact){ const i = lowerBound(IDX.words, qt.t); if (IDX.words[i] === qt.t) for (const d of IDX.post[i]) set.add(d); return set; }
+  for (let i = lowerBound(IDX.words, qt.s); i < IDX.words.length && IDX.words[i].startsWith(qt.s); i++) for (const d of IDX.post[i]) set.add(d);
+  return set;
+}
+
+// ---------- state ----------
+const F = {fac:new Set(), area:new Set(), lvl:new Set(), sem:new Set(), ects:new Set(), lang:new Set()};
+const ECTS_B = [["do 2",e=>e<=2],["3",e=>e>2&&e<=3],["4",e=>e>3&&e<=4],["5",e=>e>4&&e<=5],["6",e=>e>5&&e<=6],["7 do 9",e=>e>6&&e<10],["10 i više",e=>e>=10]];
+const SEM_B = ["Zimski","Ljetni"];
+let lastQ = [], hits = [], shown = 0;
+const PAGE = 40;
+
+function facetOK(c, skip){
+  if (skip!=="fac"  && F.fac.size  && !F.fac.has(c.f)) return false;
+  if (skip!=="area" && F.area.size && !F.area.has(c.a)) return false;
+  if (skip!=="lvl"  && F.lvl.size  && !c.l.some(x=>F.lvl.has(x))) return false;
+  if (skip!=="sem"  && F.sem.size  && !c.zl.some(x=>F.sem.has(x))) return false;
+  if (skip!=="ects" && F.ects.size && !F.ects.has(c.eb)) return false;
+  if (skip!=="lang" && F.lang.size && !F.lang.has(c.en)) return false;
+  return true;
+}
+
+function run(){
+  const qs = parseQuery($("#q").value);
+  lastQ = qs;
+  let base;
+  if (qs.length){
+    let sets = qs.map(docsFor).sort((a,b)=>a.size-b.size);
+    base = [...sets[0]].filter(d => sets.every(s => s.has(d)));
+  } else base = C.map((_,i)=>i);
+  // facet counts
+  const cnt = {fac:new Map(), area:new Map(), lvl:new Map(), sem:new Map(), ects:new Map(), lang:new Map()};
+  const inc = (m,k)=>m.set(k,(m.get(k)||0)+1);
+  const res = [];
+  for (const i of base){
+    const c = C[i];
+    const ok = {};
+    let all = true;
+    for (const k of ["fac","area","lvl","sem","ects","lang"]){ ok[k] = facetOK(c, k) ; }
+    // c passes all filters iff passes with skip of any one AND that one itself
+    const pass = facetOK(c, null);
+    if (pass) res.push(i);
+    if (ok.fac) inc(cnt.fac, c.f);
+    if (ok.area) inc(cnt.area, c.a);
+    if (ok.lvl) for (const x of c.l) inc(cnt.lvl, x);
+    if (ok.sem) for (const x of c.zl) inc(cnt.sem, x);
+    if (ok.ects) inc(cnt.ects, c.eb);
+    if (ok.lang) inc(cnt.lang, c.en);
+  }
+  // score
+  const sort = $("#sort").value;
+  if (qs.length){
+    for (const i of res){
+      const c = C[i]; let s = 0;
+      const nw = c.nn.match(WORD) || [];
+      for (const qt of qs){ if (nw.some(w=>tokMatch(w,qt))) s += 10; if (nw.some(w=>w===qt.t)) s += 3; }
+      c._s = s;
+    }
+  }
+  const byName = (a,b)=>C[a].n.localeCompare(C[b].n,"hr");
+  if (sort==="name" || !qs.length && sort==="rel") res.sort(byName);
+  else if (sort==="ects") res.sort((a,b)=>C[b].e-C[a].e || byName(a,b));
+  else res.sort((a,b)=>C[b]._s-C[a]._s || byName(a,b));
+  hits = res; shown = 0;
+  renderFilters(cnt);
+  renderChips();
+  $("#count").innerHTML = `${res.length.toLocaleString("hr")} ${plural(res.length,"kolegij","kolegija","kolegija")} <small>od ${C.length.toLocaleString("hr")}</small>`;
+  $("#res").innerHTML = "";
+  if (!res.length){
+    $("#res").innerHTML = `<li class="empty">Nijedan kolegij ne odgovara upitu${Object.values(F).some(s=>s.size)?" i odabranim filtrima":""}. Pokušajte kraću riječ ili uklonite neki filtar.</li>`;
+    $("#more").hidden = true; return;
+  }
+  more();
+}
+function plural(n,a,b,c){ const m10=n%10, m100=n%100; if(m10===1&&m100!==11) return a; if(m10>=2&&m10<=4&&(m100<12||m100>14)) return b; return c; }
+
+// ---------- highlight ----------
+function highlight(text, qs){
+  if (!qs.length) return esc(text);
+  let out = "", last = 0;
+  for (const m of text.matchAll(WORD)){
+    const w = norm(m[0]);
+    if (qs.some(qt=>tokMatch(w,qt))){
+      out += esc(text.slice(last, m.index)) + "<mark>" + esc(m[0]) + "</mark>";
+      last = m.index + m[0].length;
+    }
+  }
+  return out + esc(text.slice(last));
+}
+function snippet(text, qs){
+  const L = 300;
+  if (!text) return {html:"", found:false};
+  let pos = -1;
+  if (qs.length){
+    for (const m of text.matchAll(WORD)){ const w = norm(m[0]); if (qs.some(qt=>tokMatch(w,qt))){ pos = m.index; break; } }
+  }
+  if (pos < 0){
+    const t = text.length > L ? text.slice(0, L).replace(/\s+\S*$/,"") + " …" : text;
+    return {html: esc(t), found:false};
+  }
+  let a = Math.max(0, pos - 110), b = Math.min(text.length, a + L);
+  if (a > 0){ const sp = text.indexOf(" ", a); if (sp > 0 && sp < pos) a = sp + 1; }
+  if (b < text.length){ const sp = text.lastIndexOf(" ", b); if (sp > pos) b = sp; }
+  return {html: (a>0?"… ":"") + highlight(text.slice(a,b), qs) + (b<text.length?" …":""), found:true};
+}
+
+function more(){
+  const frag = document.createDocumentFragment();
+  const end = Math.min(hits.length, shown + PAGE);
+  for (let k = shown; k < end; k++) frag.appendChild(card(C[hits[k]]));
+  shown = end;
+  $("#res").appendChild(frag);
+  $("#more").hidden = shown >= hits.length;
+  $("#more").textContent = `Prikaži još (${(hits.length-shown).toLocaleString("hr")})`;
+}
+function card(c){
+  const li = document.createElement("li"); li.className = "item";
+  const qs = lastQ;
+  const sn = snippet(c.d, qs);
+  const lv = c.l.map(x=>D.levels[x]).join(", ");
+  const sl = c.s.map(x=>x+"."); const sems = sl.length ? (sl.length>1 ? sl.slice(0,-1).join(", ")+" i "+sl.at(-1) : sl[0]) + " semestar" : "";
+  const zl = c.zl.map(x=>SEM_B[x].toLowerCase()).join(" i ");
+  li.innerHTML = `
+    <h3><a href="${esc(c.u)}" target="_blank" rel="noopener">${highlight(c.n, qs)}</a></h3>
+    <div class="fac">${esc(D.fac[c.f][1])}</div>
+    <div class="meta"><span><b>${fmtE(c.e)}</b> ECTS</span><span>${esc(lv)}</span><span>${esc(zl)}${sems?" ("+esc(sems)+")":""}</span>${c.j?`<span>${esc(c.j)}</span>`:""}</div>
+    ${c.d ? `<p class="snip">${c.dk?'<span class="lead">Ishodi učenja (opis nije unesen)</span>':''}${sn.html}</p>` : `<p class="snip" style="color:var(--faint)">Opis nije unesen u ISVU.</p>`}
+    <div class="acts">
+      ${c.d && c.d.length > 300 ? `<button type="button" data-a="full" aria-expanded="false">Cijeli opis</button>` : ""}
+      <button type="button" data-a="progs" aria-expanded="false">Studiji (${c.p.length})</button>
+      <a href="${esc(c.u)}" target="_blank" rel="noopener">Kolegij u ISVU-u</a>
+    </div>`;
+  li.addEventListener("click", e=>{
+    const b = e.target.closest("button[data-a]"); if (!b) return;
+    const kind = b.dataset.a, open = b.getAttribute("aria-expanded")==="true";
+    const ex = li.querySelector("."+kind+"-x");
+    if (open){ ex && ex.remove(); b.setAttribute("aria-expanded","false"); if(kind==="full") b.textContent="Cijeli opis"; return; }
+    b.setAttribute("aria-expanded","true");
+    const div = document.createElement("div");
+    if (kind==="full"){ div.className = "full full-x"; div.innerHTML = highlight(c.d, qs); b.textContent="Sakrij opis"; }
+    else { div.className = "progs progs-x"; div.textContent = "Na studijima: " + c.p.join("; "); }
+    li.querySelector(".acts").after(div);
+  });
+  return li;
+}
+function fmtE(e){ return (Math.round(e*10)/10).toLocaleString("hr"); }
+
+// ---------- filters UI ----------
+const GROUPS = () => [
+  {k:"area", t:"Područje", items: D.areas.map((a,i)=>[i,a])},
+  {k:"fac",  t:"Fakultet", items: D.fac.map((f,i)=>[i,f[1]]).sort((a,b)=>a[1].localeCompare(b[1],"hr")), search:true},
+  {k:"lvl",  t:"Razina", items: D.levels.map((a,i)=>[i,a])},
+  {k:"sem",  t:"Semestar", items: SEM_B.map((a,i)=>[i,a])},
+  {k:"ects", t:"ECTS", items: ECTS_B.map((a,i)=>[i,a[0]])},
+  {k:"lang", t:"Jezik nastave", items: [[1,"Engleski"],[0,"Ostali / nije navedeno"]]},
+];
+let facFilter = "";
+function renderFilters(cnt){
+  const el = $("#filters");
+  const scroll = el.querySelector(".faclist")?.scrollTop || 0;
+  let h = "";
+  for (const g of GROUPS()){
+    h += `<div class="fgroup"><h2>${g.t}${F[g.k].size?`<button type="button" data-clear="${g.k}">Poništi</button>`:""}</h2>`;
+    if (g.search) h += `<input class="facsearch" id="facsearch" type="search" placeholder="Nađi fakultet" value="${esc(facFilter)}" aria-label="Nađi fakultet"><div class="faclist">`;
+    for (const [v,lab] of g.items){
+      if (g.search && facFilter && !norm(lab).includes(norm(facFilter))) continue;
+      const n = cnt[g.k].get(v) || 0, on = F[g.k].has(v);
+      h += `<label class="opt${n||on?"":" zero"}"><input type="checkbox" data-k="${g.k}" value="${v}"${on?" checked":""}><span class="lbl">${esc(lab)}</span><span class="n">${n.toLocaleString("hr")}</span></label>`;
+    }
+    if (g.search) h += `</div>`;
+    h += `</div>`;
+  }
+  h += `<div class="fgroup"><button type="button" class="clearall" id="clearall">Poništi sve filtre</button></div>`;
+  const active = document.activeElement && document.activeElement.id === "facsearch";
+  const selStart = active ? document.activeElement.selectionStart : 0;
+  el.innerHTML = h;
+  const fl = el.querySelector(".faclist"); if (fl) fl.scrollTop = scroll;
+  if (active){ const fs = $("#facsearch"); fs.focus(); fs.setSelectionRange(selStart, selStart); }
+  const nf = Object.values(F).reduce((a,s)=>a+s.size,0);
+  $("#mf").textContent = nf ? `Filtri (${nf})` : "Filtri";
+}
+function renderChips(){
+  let h = "";
+  for (const g of GROUPS()) for (const [v,lab] of g.items) if (F[g.k].has(v)) h += `<button type="button" class="chip" data-k="${g.k}" data-v="${v}" aria-label="Ukloni filtar ${esc(lab)}">${esc(lab)}</button>`;
+  $("#chips").innerHTML = h;
+}
+
+// ---------- wiring ----------
+let tmr;
+function wire(){
+  $("#q").addEventListener("input", ()=>{ clearTimeout(tmr); tmr = setTimeout(run, 180); });
+  $("#sort").addEventListener("change", run);
+  $("#more").addEventListener("click", more);
+  $("#filters").addEventListener("change", e=>{
+    const t = e.target; if (!t.dataset.k) return;
+    const v = +t.value; t.checked ? F[t.dataset.k].add(v) : F[t.dataset.k].delete(v); run();
+  });
+  $("#filters").addEventListener("input", e=>{ if (e.target.id==="facsearch"){ facFilter = e.target.value; run(); }});
+  $("#filters").addEventListener("click", e=>{
+    const c = e.target.closest("[data-clear]"); if (c){ F[c.dataset.clear].clear(); run(); }
+    if (e.target.id==="clearall"){ Object.values(F).forEach(s=>s.clear()); facFilter=""; run(); }
+  });
+  $("#chips").addEventListener("click", e=>{ const c = e.target.closest(".chip"); if (!c) return; F[c.dataset.k].delete(+c.dataset.v); run(); });
+  $("#mf").addEventListener("click", ()=>{ const a = $("#filters").classList.toggle("open"); $("#mf").setAttribute("aria-expanded", a); });
+}
+
+async function load(){
+  const b64 = $("#data").textContent.trim();
+  const bin = Uint8Array.from(atob(b64), ch => ch.charCodeAt(0));
+  const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"));
+  D = JSON.parse(await new Response(stream).text());
+  C = D.c.map(r => {
+    const [n,f,e,l,s,d,dk,u,j,p] = r;
+    const fac = D.fac[f];
+    const zl = [...new Set(s.map(x => x % 2 ? 0 : 1))].sort();
+    const eb = ECTS_B.findIndex(b=>b[1](e));
+    return {n,f,e,l,s,d,dk,j,p, a:fac[2], zl, eb, en: /engl/i.test(j||"") ? 1 : 0,
+      u:`https://www.isvu.hr/visokaucilista/hr/podaci/${fac[0]}/akademskagodina/${D.year}/predmet/${u[0]}/razina/${u[1]}/izvedba/${u[2]}/smjer/${u[3]}`,
+      nn: norm(n), nd: norm(d||"")};
+  });
+  const nd = C.filter(c => !c.d).length;
+  if (nd){ const el = $("#nodesc"); el.hidden = false;
+    el.textContent = `Za ${nd.toLocaleString("hr")} od ${C.length.toLocaleString("hr")} kolegija (${Math.round(100*nd/C.length)} %) fakulteti u ISVU nisu unijeli opis, pa se oni pronalaze samo po nazivu.`; }
+  IDX = buildIndex();
+  wire();
+  const hq = new URLSearchParams(location.hash.slice(1)).get("q");
+  if (hq) $("#q").value = hq;
+  run();
+}
+load().catch(err => { $("#res").innerHTML = `<li class="empty">Podaci se nisu učitali: ${esc(String(err))}. Otvorite stranicu u novijem pregledniku (Chrome, Edge, Firefox ili Safari 16.4+).</li>`; });
+</script>
+</body>
+</html>

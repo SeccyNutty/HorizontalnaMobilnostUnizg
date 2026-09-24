@@ -1,0 +1,79 @@
+name: Osvježi kolegije iz ISVU-a
+
+on:
+  schedule:
+    - cron: "0 3 1 * *"   # 1. u mjesecu u 03:00 UTC
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Početna godina ak. god. (npr. 2026 za 2026./2027.). Prazno = automatski."
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instaliraj ovisnosti
+        run: pip install requests beautifulsoup4
+
+      - name: Odredi akademsku godinu
+        id: y
+        run: |
+          if [ -n "${{ github.event.inputs.year }}" ]; then Y="${{ github.event.inputs.year }}";
+          else M=$(date +%-m); Y=$(date +%Y); [ "$M" -lt 7 ] && Y=$((Y-1)); fi
+          echo "year=$Y" >> "$GITHUB_OUTPUT"; echo "Akademska godina: $Y./$((Y+1))."
+
+      - name: Prikupi i izgradi
+        working-directory: pipeline/scripts
+        env:
+          A: --year ${{ steps.y.outputs.year }} --workdir ${{ github.workspace }}/work
+        run: |
+          python s1_institutions.py $A
+          python s2_programs.py $A
+          python s3_details.py $A --threads 8
+          python s4_build.py $A --out ${{ github.workspace }}/work/index.html
+
+      - name: Provjeri prema ISVU-u (uzorak uživo + pretraga)
+        working-directory: pipeline/scripts
+        run: python s5_verify.py --year ${{ steps.y.outputs.year }} --workdir ${{ github.workspace }}/work --out ${{ github.workspace }}/work/index.html
+
+      - name: Izvještaj provjere u sažetak
+        if: always()
+        run: '[ -f work/verification_report.md ] && cat work/verification_report.md >> "$GITHUB_STEP_SUMMARY" || true'
+
+      - name: Sanity check broja kolegija
+        run: |
+          python - <<'PY'
+          import json
+          n = len(json.load(open("work/courses.json")))
+          print("kolegija:", n)
+          assert n > 10000, f"Premalo kolegija ({n}) – ISVU je možda nedostupan ili promijenjen, ne objavljujem."
+          PY
+
+      - name: Commitaj novu stranicu
+        run: |
+          cp work/index.html site/index.html
+          git config user.name "isvu-refresh-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add site/index.html
+          if git diff --cached --quiet; then echo "Nema promjena."; exit 0; fi
+          git commit -m "Osvježeni kolegiji iz ISVU-a ($(date +%Y-%m-%d))"
+          git push
